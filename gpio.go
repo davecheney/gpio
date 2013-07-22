@@ -1,35 +1,39 @@
-// Package gpio provides an interface to the GPIO pins on various
-// embedded systems.
 package gpio
 
-type Direction string
+import (
+	"github.com/davecheney/gpio/common"
+	"github.com/davecheney/gpio/linux"
+)
+
+type Driver int
 
 const (
-	INPUT  Direction = "in"
-	OUTPUT Direction = "out"
+	DriverLinux Driver = iota
 )
 
 // Pin represents a GPIO pin.
 type Pin interface {
-	// Set sets the pin to a high level.
-	Set()
+	Direction() common.Direction   // gets the current pin direction
+	SetDirection(common.Direction) // set the current direction
+	Set()                          // sets the pin state high
+	Clear()                        // sets the pin state low
+	Close()                        // if applicable, closes the pin
+	Get() byte                     // returns the current pin state
+	Watch() <-chan bool            // returns a channel that can be used to watch state changes on the pin, edge triggered
+	Wait(bool)                     // wait for pin state to match boolean argument
 
-	// Get returns the current value of the pin as a boolean value.
-	// High values are true, low values are false.
-	Get() bool
+	Err() error // returns the last error state
+}
 
-	// Clear sets the pin to a low value.
-	Clear()
+// OpenPin retrieves a Pin object for the specified driver that can be used
+// to control the pin.
+func OpenPin(pin int, driver Driver) Pin {
 
-	// Close releases the pin back to the operating system
-	Close() error
+	switch driver {
+	case DriverLinux:
+		return linux.OpenPin(pin)
+	}
 
-	// SetDirection sets the direction of the pin.
-	SetDirection(Direction)
+	panic("Requested driver does not exist.")
 
-	// Diretion returns the current direction of the pin.
-	Direction() Direction
-
-	// Err returns the last error
-	Err() error
 }
