@@ -1,39 +1,25 @@
 package gpio
 
-import (
-	"github.com/davecheney/gpio/common"
-	"github.com/davecheney/gpio/linux"
-)
-
-type Driver int
+type Mode string
 
 const (
-	DriverLinux Driver = iota
+	ModeInput  Mode = "in"
+	ModeOutput Mode = "out"
+	ModePWM         = "pwm"
 )
+
+type IRQEvent func(number int, state bool)
 
 // Pin represents a GPIO pin.
 type Pin interface {
-	Direction() common.Direction   // gets the current pin direction
-	SetDirection(common.Direction) // set the current direction
-	Set()                          // sets the pin state high
-	Clear()                        // sets the pin state low
-	Close()                        // if applicable, closes the pin
-	Get() byte                     // returns the current pin state
-	Watch() <-chan bool            // returns a channel that can be used to watch state changes on the pin, edge triggered
-	Wait(bool)                     // wait for pin state to match boolean argument
+	Mode() Mode     // gets the current pin mode
+	SetMode(Mode)   // set the current pin mode
+	Set()           // sets the pin state high
+	Clear()         // sets the pin state low
+	Close()         // if applicable, closes the pin
+	Get() bool      // returns the current pin state
+	Watch(IRQEvent) // calls the function argument when an edge trigger event occurs
+	Wait(bool)      // wait for pin state to match boolean argument
 
 	Err() error // returns the last error state
-}
-
-// OpenPin retrieves a Pin object for the specified driver that can be used
-// to control the pin.
-func OpenPin(pin int, driver Driver) Pin {
-
-	switch driver {
-	case DriverLinux:
-		return linux.OpenPin(pin)
-	}
-
-	panic("Requested driver does not exist.")
-
 }

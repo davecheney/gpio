@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/davecheney/gpio"
-	"github.com/davecheney/gpio/common"
 	"os"
 	"os/signal"
 	"time"
@@ -11,8 +10,8 @@ import (
 
 func main() {
 	// set GPIO25 to output mode
-	pin := gpio.OpenPin(25, gpio.DriverLinux)
-	pin.SetDirection(common.DirectionOut)
+	pin := gpio.OpenPin(25)
+	pin.SetMode(gpio.ModeOutput)
 
 	// turn the led off on exit
 	c := make(chan os.Signal, 1)
