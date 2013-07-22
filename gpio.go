@@ -2,11 +2,11 @@
 // embedded systems.
 package gpio
 
-type Direction int
+type Direction string
 
 const (
-	INPUT Direction = iota
-	OUTPUT
+	INPUT  Direction = "in"
+	OUTPUT Direction = "out"
 )
 
 // Pin represents a GPIO pin.
@@ -31,5 +31,5 @@ type Pin interface {
 	Direction() Direction
 
 	// Err returns the last error
-	Err()
+	Err() error
 }
