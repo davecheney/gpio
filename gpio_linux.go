@@ -13,13 +13,13 @@ type pin struct {
 	err           error  //the last error
 }
 
-func OpenPin(number int) (*Pin, error) {
+func OpenPin(number int) (Pin, error) {
 	numString := strconv.Itoa(number)
 	p := &pin{
 		number:        number,
 		numberAsBytes: []byte(numString),
-		modePath:      MergeStrings(GPIOPathPrefix, numString, modePathSuffix),
-		valuePath:     MergeStrings(GPIOPathPrefix, numString, valuePathSuffix),
+		modePath:      MergeStrings(gpioPathPrefix, numString, modePathSuffix),
+		valuePath:     MergeStrings(gpioPathPrefix, numString, valuePathSuffix),
 	}
 
 	// export this pin to create the virtual files on the system
@@ -84,12 +84,11 @@ func (p *pin) Get() bool {
 	bytes := make([]byte, 1)
 	p.err = read(&bytes, p.valuePath)
 
-	return bool(bytes[0])
+	return bytes[0] != 0
 }
 
 func (p *pin) Watch(callback IRQEvent) {
 	panic("Watch is not yet implemented!")
-	return make(chan bool, 0)
 }
 
 func (p *pin) Wait(condition bool) {

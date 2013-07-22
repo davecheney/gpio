@@ -16,7 +16,7 @@ type Pin interface {
 	SetMode(Mode)   // set the current pin mode
 	Set()           // sets the pin state high
 	Clear()         // sets the pin state low
-	Close()         // if applicable, closes the pin
+	Close() error   // if applicable, closes the pin
 	Get() bool      // returns the current pin state
 	Watch(IRQEvent) // calls the function argument when an edge trigger event occurs
 	Wait(bool)      // wait for pin state to match boolean argument

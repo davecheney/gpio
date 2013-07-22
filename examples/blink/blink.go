@@ -10,7 +10,11 @@ import (
 
 func main() {
 	// set GPIO25 to output mode
-	pin := gpio.OpenPin(25)
+	pin, err := gpio.OpenPin(25)
+	if err != nil {
+		fmt.Printf("Error opening pin! %s\n", err)
+		return
+	}
 	pin.SetMode(gpio.ModeOutput)
 
 	// turn the led off on exit
