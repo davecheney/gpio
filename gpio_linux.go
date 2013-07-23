@@ -45,11 +45,11 @@ var (
 
 // pin represents a GPIO pin.
 type pin struct {
-	number        int    // the pin number
-	numberAsBytes []byte // the pin number as a byte array to avoid converting each time
-	modePath      string // the path to the /direction FD to avoid string joining each time
-	valuePath     string // the path to the /value FD to avoid string joining each time
-	err           error  //the last error
+	number        int      // the pin number
+	numberAsBytes []byte   // the pin number as a byte array to avoid converting each time
+	modePath      string   // the path to the /direction FD to avoid string joining each time
+	valueFile     *os.File // the file handle for the value file
+	err           error    //the last error
 }
 
 // OpenPin exports the pin, creating the virtual files necessary for interacting with the pin.
@@ -60,7 +60,6 @@ func OpenPin(number int, mode Mode) (Pin, error) {
 		number:        number,
 		numberAsBytes: []byte(numString),
 		modePath:      fmt.Sprintf("%s%s%s", gpioPathPrefix, numString, modePathSuffix),
-		valuePath:     fmt.Sprintf("%s%s%s", gpioPathPrefix, numString, valuePathSuffix),
 	}
 
 	// export this pin to create the virtual files on the system
@@ -70,6 +69,9 @@ func OpenPin(number int, mode Mode) (Pin, error) {
 	if err != nil {
 		p.SetMode(mode)
 	}
+
+	valueFile, err := os.Create(fmt.Sprintf("%s%s%s", gpioPathPrefix, numString, valuePathSuffix))
+	p.valueFile = valueFile
 
 	return p, err
 
@@ -102,6 +104,7 @@ func read(bytes *[]byte, path string) error {
 
 // Close destroys the virtual files on the filesystem, unexporting the pin.
 func (p *pin) Close() error {
+	p.valueFile.Close()
 	err := write(p.numberAsBytes, unexportPath)
 	p.err = err
 	return err
@@ -121,18 +124,18 @@ func (p *pin) SetMode(mode Mode) {
 
 // Set sets the pin level high.
 func (p *pin) Set() {
-	p.err = write(BytesSet, p.valuePath)
+	p.valueFile.Write(BytesSet)
 }
 
 // Clear sets the pin level low.
 func (p *pin) Clear() {
-	p.err = write(BytesClear, p.valuePath)
+	p.valueFile.Write(BytesClear)
 }
 
 // Get retrieves the current pin level.
 func (p *pin) Get() bool {
 	bytes := make([]byte, 1)
-	p.err = read(&bytes, p.valuePath)
+	p.valueFile.Read(bytes)
 
 	return bytes[0] != 0
 }
