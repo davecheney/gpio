@@ -1,5 +1,6 @@
 package gpio
 
+// Mode represents a state of a GPIO pin
 type Mode string
 
 const (
