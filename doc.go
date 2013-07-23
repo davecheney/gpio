@@ -1,3 +1,2 @@
-// Package gpio provides a user space interface to gpio pins.
-
+// Package gpio provides a user space interface to GPIO pins.
 package gpio
