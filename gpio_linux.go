@@ -6,8 +6,6 @@ import (
 	"strconv"
 )
 
-//Constants
-
 //By default, pins 14 and 15 boot to UART mode, so they are going to be ignored for now.
 //We can add them in later as necessary.
 
@@ -39,8 +37,8 @@ const (
 )
 
 var (
-	BytesSet   = []byte{'1'}
-	BytesClear = []byte{'0'}
+	bytesSet   = []byte{'1'}
+	bytesClear = []byte{'0'}
 )
 
 // pin represents a GPIO pin.
@@ -127,12 +125,12 @@ func (p *pin) SetMode(mode Mode) {
 
 // Set sets the pin level high.
 func (p *pin) Set() {
-	p.valueFile.Write(BytesSet)
+	p.valueFile.Write(bytesSet)
 }
 
 // Clear sets the pin level low.
 func (p *pin) Clear() {
-	p.valueFile.Write(BytesClear)
+	p.valueFile.Write(bytesClear)
 }
 
 // Get retrieves the current pin level.
