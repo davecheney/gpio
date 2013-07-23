@@ -1,14 +1,48 @@
-package gpio
+package gpio_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/davecheney/gpio/rpi"
+	"github.com/davecheney/gpio"
 )
 
-func TestLinuxImplementsPin(t *testing.T) {
 
-	assert.Implements(t, (*Pin)(nil), new(pin))
-
+func TestOpenPin(t *testing.T) {
+	checkRoot(t)
+	pin, err := gpio.OpenPin(rpi.GPIO_P1_22, gpio.ModeInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = pin.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-// TODO: write some useful tests
+// test opening pins from a non priviledged user fails
+func TestOpenPinUnpriv(t *testing.T) {
+	checkNotRoot(t)
+	pin, err := gpio.OpenPin(rpi.GPIO_P1_22, gpio.ModeInput)
+	if err == nil {
+		pin.Close()
+		t.Fatalf("OpenPin is expected to fail for non priv user")
+	}
+}
+
+func TestSetDirection(t *testing.T) {
+	checkRoot(t)
+	pin, err := gpio.OpenPin(rpi.GPIO_P1_22, gpio.ModeInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pin.Close()
+	pin.SetMode(gpio.ModeOutput)
+	if pin.Err() != nil {
+		t.Fatal(err)
+	}
+	dir := pin.Mode()
+	if err := pin.Err(); dir != gpio.ModeOutput || err != nil {
+		t.Fatalf("pin.Mode(): expected %v %v , got %v %v", gpio.ModeOutput, nil, dir, err)
+	}
+}
