@@ -63,17 +63,19 @@ func OpenPin(number int, mode Mode) (Pin, error) {
 	}
 
 	// export this pin to create the virtual files on the system
-	err := write(p.numberAsBytes, exportPath)
+	exportFile, err := os.OpenFile(exportPath, os.O_WRONLY, 0200)
+	exportFile.Write(p.numberAsBytes)
+	exportFile.Close()
 	p.err = err
 
-	if err != nil {
+	if err == nil {
 		p.SetMode(mode)
+		valueFile, err := os.Create(fmt.Sprintf("%s%s%s", gpioPathPrefix, numString, valuePathSuffix))
+		p.valueFile = valueFile
+		p.err = err
 	}
 
-	valueFile, err := os.Create(fmt.Sprintf("%s%s%s", gpioPathPrefix, numString, valuePathSuffix))
-	p.valueFile = valueFile
-
-	return p, err
+	return p, p.err
 
 }
 
