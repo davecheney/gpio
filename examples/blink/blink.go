@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecheney/gpio"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/davecheney/gpio"
+	"github.com/davecheney/gpio/rpi"
 )
 
 func main() {
 	// set GPIO25 to output mode
-	pin, err := gpio.OpenPin(25, gpio.ModeOutput)
+	pin, err := gpio.OpenPin(rpi.GPIO_P1_22, gpio.ModeOutput)
 	if err != nil {
 		fmt.Printf("Error opening pin! %s\n", err)
 		return

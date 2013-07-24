@@ -36,12 +36,14 @@ func TestSetDirection(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pin.Close()
+	if dir, err := pin.Mode(), pin.Err(); dir != gpio.ModeInput || err != nil {
+		t.Fatalf("pin.Mode(): expected %v %v , got %v %v", gpio.ModeInput, nil, dir, err)
+	}
 	pin.SetMode(gpio.ModeOutput)
 	if pin.Err() != nil {
 		t.Fatal(err)
 	}
-	dir := pin.Mode()
-	if err := pin.Err(); dir != gpio.ModeOutput || err != nil {
+	if dir, err := pin.Mode(), pin.Err(); dir != gpio.ModeOutput || err != nil {
 		t.Fatalf("pin.Mode(): expected %v %v , got %v %v", gpio.ModeOutput, nil, dir, err)
 	}
 }

@@ -67,14 +67,17 @@ func OpenPin(n int, mode Mode) (Pin, error) {
 		modePath:  filepath.Join(pinBase, "direction"),
 		valueFile: value,
 	}
-	p.SetMode(mode)
+	if err := p.setMode(mode); err != nil {
+		p.Close()
+		return nil, err
+	}
 	return p, nil
 }
 
 // write opens a file for writing, writes the byte slice to it and closes the
 // file.
 func write(buf []byte, path string) error {
-	file, err := os.OpenFile(filepath.Join(gpiobase, path), os.O_WRONLY, 0600)
+	file, err := os.OpenFile(path, os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
@@ -103,7 +106,11 @@ func (p *pin) Mode() Mode {
 
 // SetMode sets the mode of the pin.
 func (p *pin) SetMode(mode Mode) {
-	p.err = write([]byte(mode), p.modePath)
+	p.err = p.setMode(mode)
+}
+
+func (p *pin) setMode(mode Mode) error {
+	return write([]byte(mode), p.modePath)
 }
 
 // Set sets the pin level high.
