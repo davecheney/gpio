@@ -1,11 +1,11 @@
-gpio
-====
+# gpio
 
 GPIO for Go
 
-testing
--------
+## testing
 
 Please run the 'blink' example found under examples/blink. Proper tests will be added soon.
 
+## alternatives
 
+[https://github.com/mrmorphic/hwio][https://github.com/mrmorphic/hwio] is another project aiming to expose the hardware capabilities of embedded systems via Go.
