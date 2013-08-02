@@ -146,8 +146,12 @@ func (p *pin) Err() error {
 }
 
 func expose(pin int) (string, error) {
-	err := writeFile(filepath.Join(gpiobase, "export"), "%d", pin)
-	return filepath.Join(gpiobase, fmt.Sprintf("gpio%d", pin)), err
+	pinBase := filepath.Join(gpiobase, fmt.Sprintf("gpio%d", pin))
+	var err error
+	if _, statErr := os.Stat(pinBase); os.IsNotExist(statErr) {
+		err = writeFile(filepath.Join(gpiobase, "export"), "%d", pin)
+	}
+	return pinBase, err
 }
 
 func writeFile(path string, format string, args ...interface{}) error {
