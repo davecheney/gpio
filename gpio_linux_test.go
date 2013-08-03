@@ -47,3 +47,8 @@ func TestSetDirection(t *testing.T) {
 		t.Fatalf("pin.Mode(): expected %v %v , got %v %v", gpio.ModeOutput, nil, dir, err)
 	}
 }
+
+func TestMockfs(t *testing.T) {
+	m := newmockfs(t)
+	m.destroy()
+}
