@@ -21,7 +21,7 @@ const (
 
 // IRQEvent defines the callback function used to inform the caller
 // of an interrupt.
-type IRQEvent func(state bool)
+type IRQEvent func()
 
 // Pin represents a GPIO pin.
 type Pin interface {

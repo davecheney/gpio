@@ -78,7 +78,7 @@ func setupEpoll() {
 					if eventPin.initial {
 						eventPin.initial = false
 					} else {
-						eventPin.callback(eventPin.Get())
+						eventPin.callback()
 					}
 				}
 			}
@@ -193,8 +193,7 @@ func (p *pin) BeginWatch(edge Edge, callback IRQEvent) error {
 	}
 
 	var event syscall.EpollEvent
-	//event.Events = syscall.EPOLLIN | syscall.EPOLLET | syscall.EPOLLPRI
-	event.Events = syscall.EPOLLIN | (syscall.EPOLLET & 0xffffffff) | syscall.EPOLLPRI | syscall.EPOLLOUT
+	event.Events = syscall.EPOLLIN | (syscall.EPOLLET & 0xffffffff) | syscall.EPOLLPRI
 
 	fd := int(p.valueFile.Fd())
 
