@@ -2,7 +2,6 @@ package gpio
 
 import (
 	"fmt"
-	"github.com/stretchr/core/dispatch"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -46,14 +45,14 @@ var (
 
 // watchEventCallbacks is a map of pins and their callbacks when
 // watching for interrupts
-var watchEventCallbacks map[int]pin
+var watchEventCallbacks map[int]*pin
 
 // epollFD is the FD for epoll
 var epollFD int
 
 func init() {
 	setupEpoll()
-	watchEventCallbacks = make(map[int]pin)
+	watchEventCallbacks = make(map[int]*pin)
 }
 
 // setupEpoll sets up epoll for use
@@ -71,14 +70,14 @@ func setupEpoll() {
 
 		for {
 
-			numEvents, err := syscall.EpollWait(epollFD, epollEvents[:], -1)
+			_, err := syscall.EpollWait(epollFD, epollEvents[:], -1)
 			if err != nil {
-				panic("EpollWait error: ", err.Error())
+				panic(fmt.Sprintf("EpollWait error: %s", err.Error()))
 			}
 
 			for _, event := range epollEvents {
-				if eventPin, exists := watchEventCallbacks[event.Fd]; exists {
-					eventPin.callback(eventPin.number, p.Get())
+				if eventPin, exists := watchEventCallbacks[int(event.Fd)]; exists {
+					eventPin.callback(eventPin.number, eventPin.Get())
 				}
 			}
 
@@ -193,7 +192,8 @@ func (p *pin) BeginWatch(edge Edge, callback IRQEvent) error {
 	watchEventCallbacks[p.number] = p
 
 	var event syscall.EpollEvent
-	event.Events = syscall.EPOLLIN | syscall.EPOLLET | syscall.EPOLLPRI
+	//event.Events = syscall.EPOLLIN | syscall.EPOLLET | syscall.EPOLLPRI
+	event.Events = syscall.EPOLLIN
 
 	fd := int(p.valueFile.Fd())
 
