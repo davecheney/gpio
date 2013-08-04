@@ -27,30 +27,30 @@ func main() {
 	go func() {
 		for _ = range c {
 			fmt.Println("Closing pin and terminating program.")
+			power.Clear()
 			pin.Close()
 			power.Close()
 			os.Exit(0)
 		}
 	}()
 
-	defer pin.Close()
-	err = pin.BeginWatch(gpio.EdgeFalling, func(state bool) {
-		fmt.Printf("Callback: Pin %d is now %v\n\n", gpio.GPIO22, state)
+	err = pin.BeginWatch(gpio.EdgeFalling, func() {
+		fmt.Printf("Callback for %d triggered!\n\n", gpio.GPIO22)
 	})
 	if err != nil {
 		fmt.Printf("Unable to watch pin: %s\n", err.Error())
 		os.Exit(1)
 	}
 
-	fmt.Println("Now watching pin 22 on a rising edge.")
+	fmt.Println("Now watching pin 22 on a falling edge.")
 
 	for {
-		fmt.Println("Power high")
+		fmt.Println("Setting power high")
 		power.Set()
-		time.Sleep(1000 * time.Millisecond)
-		fmt.Println("Power low")
+		time.Sleep(2000 * time.Millisecond)
+		fmt.Println("Setting power low")
 		power.Clear()
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 	}
 
 }
