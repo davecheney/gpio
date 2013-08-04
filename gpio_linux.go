@@ -69,18 +69,19 @@ func setupEpoll() {
 		var epollEvents [GPIOCount]syscall.EpollEvent
 
 		for {
-
-			_, err := syscall.EpollWait(epollFD, epollEvents[:], -1)
+			numEvents, err := syscall.EpollWait(epollFD, epollEvents[:], -1)
 			if err != nil {
 				panic(fmt.Sprintf("EpollWait error: %s", err.Error()))
 			}
-
-			for _, event := range epollEvents {
-				if eventPin, exists := watchEventCallbacks[int(event.Fd)]; exists {
-					eventPin.callback(eventPin.number, eventPin.Get())
+			for i := 0; i < numEvents; i++ {
+				if eventPin, exists := watchEventCallbacks[int(epollEvents[i].Fd)]; exists {
+					if eventPin.initial {
+						eventPin.initial = false
+					} else {
+						eventPin.callback(eventPin.Get())
+					}
 				}
 			}
-
 		}
 
 	}()
@@ -95,6 +96,7 @@ type pin struct {
 	edgePath      string   // the path to the /edge FD to avoid string joining each time
 	valueFile     *os.File // the file handle for the value file
 	callback      IRQEvent // the callback function to call when an interrupt occurs
+	initial       bool     // is this the initial epoll trigger?
 	err           error    //the last error
 }
 
@@ -115,6 +117,7 @@ func OpenPin(n int, mode Mode) (Pin, error) {
 		modePath:  filepath.Join(pinBase, "direction"),
 		edgePath:  filepath.Join(pinBase, "edge"),
 		valueFile: value,
+		initial:   true,
 	}
 	if err := p.setMode(mode); err != nil {
 		p.Close()
@@ -189,13 +192,14 @@ func (p *pin) BeginWatch(edge Edge, callback IRQEvent) error {
 		return err
 	}
 
-	watchEventCallbacks[p.number] = p
-
 	var event syscall.EpollEvent
 	//event.Events = syscall.EPOLLIN | syscall.EPOLLET | syscall.EPOLLPRI
-	event.Events = syscall.EPOLLIN
+	event.Events = syscall.EPOLLIN | (syscall.EPOLLET & 0xffffffff) | syscall.EPOLLPRI | syscall.EPOLLOUT
 
 	fd := int(p.valueFile.Fd())
+
+	p.callback = callback
+	watchEventCallbacks[fd] = p
 
 	if err := syscall.SetNonblock(fd, true); err != nil {
 		return err
@@ -224,7 +228,7 @@ func (p *pin) EndWatch() error {
 		return err
 	}
 
-	delete(watchEventCallbacks, p.number)
+	delete(watchEventCallbacks, fd)
 
 	return nil
 

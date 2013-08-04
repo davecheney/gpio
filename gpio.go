@@ -14,14 +14,14 @@ type Edge string
 
 const (
 	EdgeNone    Edge = "none"
-	EdgeRisign  Edge = "rising"
+	EdgeRising  Edge = "rising"
 	EdgeFalling Edge = "falling"
 	EdgeBoth    Edge = "both"
 )
 
 // IRQEvent defines the callback function used to inform the caller
 // of an interrupt.
-type IRQEvent func(number int, state bool)
+type IRQEvent func(state bool)
 
 // Pin represents a GPIO pin.
 type Pin interface {
