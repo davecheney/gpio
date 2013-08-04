@@ -2,32 +2,35 @@ package gpio
 
 import (
 	"fmt"
+	"github.com/stretchr/core/dispatch"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 //By default, pins 14 and 15 boot to UART mode, so they are going to be ignored for now.
 //We can add them in later as necessary.
 
 const (
-	GPIO0  = 0
-	GPIO1  = 1
-	GPIO2  = 2
-	GPIO3  = 3
-	GPIO4  = 4
-	GPIO7  = 7
-	GPIO8  = 8
-	GPIO9  = 9
-	GPIO10 = 10
-	GPIO11 = 11
-	GPIO17 = 17
-	GPIO18 = 18
-	GPIO22 = 22
-	GPIO23 = 23
-	GPIO24 = 24
-	GPIO25 = 25
+	GPIO0     = 0
+	GPIO1     = 1
+	GPIO2     = 2
+	GPIO3     = 3
+	GPIO4     = 4
+	GPIO7     = 7
+	GPIO8     = 8
+	GPIO9     = 9
+	GPIO10    = 10
+	GPIO11    = 11
+	GPIO17    = 17
+	GPIO18    = 18
+	GPIO22    = 22
+	GPIO23    = 23
+	GPIO24    = 24
+	GPIO25    = 25
+	GPIOCount = 16 // the number of GPIO pins available
 )
 
 const (
@@ -41,12 +44,58 @@ var (
 	bytesClear = []byte{'0'}
 )
 
+// watchEventCallbacks is a map of pins and their callbacks when
+// watching for interrupts
+var watchEventCallbacks map[int]pin
+
+// epollFD is the FD for epoll
+var epollFD int
+
+func init() {
+	setupEpoll()
+	watchEventCallbacks = make(map[int]pin)
+}
+
+// setupEpoll sets up epoll for use
+func setupEpoll() {
+	var err error
+	epollFD, err = syscall.EpollCreate1(0)
+	if err != nil {
+		fmt.Println("Unable to create epoll FD: ", err.Error())
+		os.Exit(1)
+	}
+
+	go func() {
+
+		var epollEvents [GPIOCount]syscall.EpollEvent
+
+		for {
+
+			numEvents, err := syscall.EpollWait(epollFD, epollEvents[:], -1)
+			if err != nil {
+				panic("EpollWait error: ", err.Error())
+			}
+
+			for _, event := range epollEvents {
+				if eventPin, exists := watchEventCallbacks[event.Fd]; exists {
+					eventPin.callback(eventPin.number, p.Get())
+				}
+			}
+
+		}
+
+	}()
+
+}
+
 // pin represents a GPIO pin.
 type pin struct {
 	number        int      // the pin number
 	numberAsBytes []byte   // the pin number as a byte array to avoid converting each time
 	modePath      string   // the path to the /direction FD to avoid string joining each time
+	edgePath      string   // the path to the /edge FD to avoid string joining each time
 	valueFile     *os.File // the file handle for the value file
+	callback      IRQEvent // the callback function to call when an interrupt occurs
 	err           error    //the last error
 }
 
@@ -65,6 +114,7 @@ func OpenPin(n int, mode Mode) (Pin, error) {
 	p := &pin{
 		number:    n,
 		modePath:  filepath.Join(pinBase, "direction"),
+		edgePath:  filepath.Join(pinBase, "edge"),
 		valueFile: value,
 	}
 	if err := p.setMode(mode); err != nil {
@@ -131,8 +181,53 @@ func (p *pin) Get() bool {
 }
 
 // Watch waits for the edge level to be triggered and then calls the callback
-func (p *pin) Watch(callback IRQEvent) {
-	panic("Watch is not yet implemented!")
+// Watch sets the pin mode to input on your behalf, then establishes the interrupt on
+// the edge provided
+
+func (p *pin) BeginWatch(edge Edge, callback IRQEvent) error {
+	p.SetMode(ModeInput)
+	if err := write([]byte(edge), p.edgePath); err != nil {
+		return err
+	}
+
+	watchEventCallbacks[p.number] = p
+
+	var event syscall.EpollEvent
+	event.Events = syscall.EPOLLIN | syscall.EPOLLET | syscall.EPOLLPRI
+
+	fd := int(p.valueFile.Fd())
+
+	if err := syscall.SetNonblock(fd, true); err != nil {
+		return err
+	}
+
+	event.Fd = int32(fd)
+
+	if err := syscall.EpollCtl(epollFD, syscall.EPOLL_CTL_ADD, fd, &event); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+// EndWatch stops watching the pin
+func (p *pin) EndWatch() error {
+
+	fd := int(p.valueFile.Fd())
+
+	if err := syscall.EpollCtl(epollFD, syscall.EPOLL_CTL_DEL, fd, nil); err != nil {
+		return err
+	}
+
+	if err := syscall.SetNonblock(fd, false); err != nil {
+		return err
+	}
+
+	delete(watchEventCallbacks, p.number)
+
+	return nil
+
 }
 
 // Wait blocks while waits for the pin state to match the condition, then returns.
