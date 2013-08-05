@@ -12,7 +12,7 @@ import (
 
 func main() {
 	// set GPIO25 to output mode
-	pin, err := gpio.OpenPin(rpi.GPIO_P1_22, gpio.ModeOutput)
+	pin, err := gpio.OpenPin(rpi.GPIO25, gpio.ModeOutput)
 	if err != nil {
 		fmt.Printf("Error opening pin! %s\n", err)
 		return

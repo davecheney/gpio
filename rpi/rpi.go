@@ -83,7 +83,17 @@ const (
 	BCM2835_GPIO_FSEL_ALT5        = 0x2 // Alternate function 5
 	BCM2835_GPIO_FSEL_MASK uint32 = 0x7
 
+	GPIO_P1_12 = 18
+	GPIO_P1_13 = 27
+	GPIO_P1_15 = 22
+	GPIO_P1_18 = 24
 	GPIO_P1_22 = 25
+
+	GPIO21 = GPIO_P1_13
+	GPIO22 = GPIO_P1_15
+	GPIO25 = GPIO_P1_22
+	GPIO24 = GPIO_P1_18
+	GPIO27 = GPIO_P1_13
 )
 
 func initRPi() {
