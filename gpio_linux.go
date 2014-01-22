@@ -167,12 +167,12 @@ func (p *pin) setMode(mode Mode) error {
 
 // Set sets the pin level high.
 func (p *pin) Set() {
-	p.valueFile.Write(bytesSet)
+	_, p.err = p.valueFile.Write(bytesSet)
 }
 
 // Clear sets the pin level low.
 func (p *pin) Clear() {
-	p.valueFile.Write(bytesClear)
+	_, p.err = p.valueFile.Write(bytesClear)
 }
 
 // Get retrieves the current pin level.
