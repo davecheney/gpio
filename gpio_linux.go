@@ -179,7 +179,7 @@ func (p *pin) Clear() {
 func (p *pin) Get() bool {
 	bytes := make([]byte, 1)
 	_, p.err = p.valueFile.ReadAt(bytes, 0)
-	return bytes[0] != 0
+	return bytes[0] == bytesSet[0]
 }
 
 // Watch waits for the edge level to be triggered and then calls the callback
