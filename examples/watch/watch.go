@@ -9,12 +9,13 @@ import (
 )
 
 func main() {
-	// set GPIO25 to output mode
+	// set GPIO22 to input mode
 	pin, err := gpio.OpenPin(gpio.GPIO22, gpio.ModeInput)
 	if err != nil {
 		fmt.Printf("Error opening pin! %s\n", err)
 		return
 	}
+	// set GPIO17 to output mode
 	power, err := gpio.OpenPin(gpio.GPIO17, gpio.ModeOutput)
 	if err != nil {
 		fmt.Printf("Error opening pin! %s\n", err)
