@@ -71,7 +71,10 @@ func setupEpoll() {
 		for {
 			numEvents, err := syscall.EpollWait(epollFD, epollEvents[:], -1)
 			if err != nil {
-				panic(fmt.Sprintf("EpollWait error: %s", err.Error()))
+				if err == syscall.EAGAIN {
+					continue
+				}
+				panic(fmt.Sprintf("EpollWait error: %v", err))
 			}
 			for i := 0; i < numEvents; i++ {
 				if eventPin, exists := watchEventCallbacks[int(epollEvents[i].Fd)]; exists {
