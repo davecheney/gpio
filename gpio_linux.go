@@ -164,8 +164,18 @@ func (p *pin) SetMode(mode Mode) {
 	p.err = p.setMode(mode)
 }
 
+func (p *pin) GetMode() Mode {
+	currentMode, _ := read(p.modePath)
+	currentMode_ := strings.Trim(string(currentMode), "\n ")
+	return Mode(currentMode_)
+}
+
 func (p *pin) setMode(mode Mode) error {
-	return write([]byte(mode), p.modePath)
+	if p.GetMode() != mode {
+		return write([]byte(mode), p.modePath)
+	} else {
+		return nil
+	}
 }
 
 // Set sets the pin level high.
