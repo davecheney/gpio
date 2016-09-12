@@ -1,5 +1,7 @@
 # gpio
 
+**THIS PROJECT IS NO LONGER ACCEPTING ISSUES OR PULL REQUESTS**
+
 GPIO for Go
 
 ## testing
